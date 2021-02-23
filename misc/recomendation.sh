@@ -1,8 +1,26 @@
 #!/bin/sh
+: ${distdir="/usr/local/cbsd"}
+
+# MAIN
+if [ -z "${workdir}" ]; then
+	[ -z "${cbsd_workdir}" ] && . /etc/rc.conf
+	[ -z "${cbsd_workdir}" ] && exit 0
+	workdir="${cbsd_workdir}"
+fi
+
+[ ! -f "${distdir}/cbsd.conf" ] && exit 1
 
 get_recomendation()
 {
-	. /root/srv/conf.conf
+	local _conf="${workdir}/etc/api.conf"
+
+	. ${_conf}
+
+	if [ -z "${server_list}" ]; then
+		echo "No server_list variable. Please add server_list= in ${workdir}/etc/api/conf"
+		echo "with the corresponding values"
+		exit 1
+	fi
 
 	num=0
 	for i in ${server_list}; do
@@ -19,9 +37,8 @@ get_recomendation()
 	num=1
 	if [ -z "${current_srv}" ]; then
 		for i in ${server_list}; do
-			sysrc -qf /root/srv/conf.conf current_srv="${i}" > /dev/null 2>&1
-			sysrc -qf /root/srv/conf.conf current_num="${num}" > /dev/null 2>&1
-			echo "recomendation for $1: ${i}" >> /tmp/recomendation.log
+			sysrc -qf ${_conf} current_srv="${i}" > /dev/null 2>&1
+			sysrc -qf ${_conf} current_num="${num}" > /dev/null 2>&1
 			echo -n "${i}"
 			exit 0
 		done
@@ -37,9 +54,8 @@ get_recomendation()
 	num=1
 	for i in ${server_list}; do
 		if [ ${num} -eq ${next_id} ]; then
-			sysrc -qf /root/srv/conf.conf current_srv="${i}" > /dev/null 2>&1
-			sysrc -qf /root/srv/conf.conf current_num="${num}" > /dev/null 2>&1
-			echo "recomendation for $1: ${i}" >> /tmp/recomendation.log
+			sysrc -qf ${_conf} current_srv="${i}" > /dev/null 2>&1
+			sysrc -qf ${_conf} current_num="${num}" > /dev/null 2>&1
 			echo -n "${i}"
 			exit 0
 		fi
@@ -50,7 +66,6 @@ get_recomendation()
 
 if [ "${1}" = "lock" ]; then
 	shift
-	echo "wakeup for: [$*]" >> /tmp/recomendation.log
 	get_recomendation
 	exit 0
 else

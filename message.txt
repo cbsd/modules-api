@@ -1,5 +1,3 @@
-# api
-CBSD module serving API service
 
 This module requires the beanstalkd, cbsd-mq-router and cbsd-mq-api, please install first, e.g:
 

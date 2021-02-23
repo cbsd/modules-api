@@ -1,0 +1,156 @@
+#!/usr/local/bin/cbsd
+#v12.2.2
+DIST_MODULE_PATH="${distmoduledir}/bhyve.d"
+. ${DIST_MODULE_PATH}/share/bhyve.conf
+
+#OPTARGS="${MYCOL} init_masters init_workers"
+MYOPTARG="imgsize jname img ram cpus pubkey host_hostname"
+MYARG="mode"
+#MYOPTARG="display header active human bhyve_name dryrun checkip develop runasap header gold"
+MYDESC="Operate with K8S cluster"
+CBSDMODULE="sys"
+# imgsize=10g mode=init jname=test img=ubuntu ram=1g cpus=2
+ADDHELP="\
+"
+EXTHELP="wf_bhyve"
+
+MODULE_PATH="${dbdir}/bhyve"
+
+. ${subr}
+dryrun=0
+checkip=1
+gold=0
+develop=0
+runasap=0
+init_masters=
+init_workers=
+ip4_gw=
+readconf bhyve-default-default.conf
+readconf bhyve.conf
+
+# ssh host
+ssh_host=
+
+readconf api.conf
+readconf bhyve-api.conf
+
+set -e
+. ${distmoduledir}/api.d/api.subr
+set +e
+MY_LOG="${cbsd_api_logdir}/bhyve-api.log"
+log "wakeup: $*"
+
+ip4_addr=
+vm_os_type=
+vm_os_profile=
+ip4_addr=
+ip4_gw=
+
+. ${cbsdinit}
+. ${system}
+. ${strings}
+
+
+create_env()
+{
+	ssh_user=
+	ssh_port=
+
+	eval vm_os_type="\$${img}_vm_os_type"
+	eval vm_os_profile="\$${img}_vm_os_profile"
+	eval ssh_user="\$${img}_ssh_user"
+
+	[ -z "${ssh_host}" ] && ssh_host="${nodeip}"
+	[ -z "${vm_os_type}" ] && "vm_os_type empty? check img/mapping in bhyve-api.conf for: ${img}"
+	[ -z "${vm_os_profile}" ] && "vm_os_profile empty? check img/mapping in bhyve-api.conf for: ${img}"
+	[ -z "${ssh_user}" ] && "ssh_user empty? check img/mapping in bhyve-api.conf for: ${img}"
+
+	ip4_addr=$( dhcpd ip4pool=${ip4pool} )
+	[ -z "${ip4_gw}" ] && ip4_gw="10.0.0.1"
+	ci_jname="${jname}"
+	ci_fqdn="${jname}.my.domain"
+	ci_ip4_addr="${ip4_addr}"
+	ci_gw4="${ip4_gw}"
+
+	[ -z "${vm_os_type}" ] && err 1 "no vm_os_type"
+	[ -z "${vm_os_profile}" ] && err 1 "no vm_os_profile"
+
+	# additional check for profile/type?
+
+	cid=$( ${MD5_CMD} -qs "${pubkey}" )
+	[ ! -d ${cbsd_api_dbdir}/${cid} ] && ${MKDIR_CMD} -p ${cbsd_api_dbdir}/${cid}
+	[ ! -d ${cbsd_api_dbdir}/${cid}/.ssh ] && ${MKDIR_CMD} -p ${cbsd_api_dbdir}/${cid}/.ssh
+	if [ ! -r ${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys ]; then
+		echo "${pubkey}" > ${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys
+		sync
+		#fflush?
+		sleep 1
+	fi
+	[ ! -d ${cbsd_api_dbdir}/${cid}/vms ] && ${MKDIR_CMD} -p ${cbsd_api_dbdir}/${cid}/vms
+
+	str="cbsd bcreate \
+jname=${jname} \
+runasap=1 \
+vm_cpus=${cpus} \
+vm_ram=${ram} \
+imgsize=${imgsize} \
+vm_os_type=\"${vm_os_type}\" \
+vm_os_profile=\"${vm_os_profile}\" \
+ci_jname=\"${jname}\" \
+ci_fqdn=\"${jname}.my.domain\" \
+ci_ip4_addr=\"${ip4_addr}\" \
+ci_gw4=\"${ip4_gw}\" \
+ip4_addr=\"${ip4_addr}\" \
+ci_user_pubkey=\"${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys\" \
+ci_jname="${host_hostname}" \
+ci_fqdn="${host_hostname}.my.domain" \
+"
+
+	log "${str}"
+	${str}
+
+	max_retry=20
+	retry=0
+
+	# inherit workdir from CBSD/API?
+	. /etc/rc.conf
+
+	while [ ${retry} -lt ${max_retry} ]; do
+		if [ -r ${cbsd_workdir}/vm/${jname}/vnc_port ]; then
+			vnc_file_stat=$( ${STAT_CMD} -f "%z" ${cbsd_workdir}/vm/${jname}/vnc_port 2>/dev/null )
+			[ ${vnc_file_stat} -gt 0 ] && break
+		fi
+		sleep 1
+		retry=$(( retry + 1 ))
+	done
+
+	if [ ${retry} -gt ${max_retry} ]; then
+		log "unable to read vnc port file: ${cbsd_workdir}/vm/${jname}/vnc_port"
+		err 1 "unable to read vnc port file: ${cbsd_workdir}/vm/${jname}/vnc_port"
+	fi
+
+	sleep 1
+
+	if [ "${nodeip_expose}" = "0" ]; then
+		port=22
+		ssh_host="${ip4_addr}"
+	else
+		vnc_port=$( ${HEAD_CMD} -n1 ${cbsd_workdir}/vm/${jname}/vnc_port | ${AWK_CMD} '{printf $1}' )
+		port=$(( vnc_port + 2000 ))
+		log "expose mode=add jname=${jname} in=${port} out=22"
+		expose mode=add jname=${jname} in=${port} out=22 >> /tmp/bhyve.log
+	fi
+
+	echo "${host_hostname} (${vm_os_type}:${vm_os_profile}) ${cpus}/${ram}/${imgsize} ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}
+	echo $( hostname ) > ${cbsd_api_dbdir}/${cid}/${jname}.node
+	echo -n "ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh
+}
+
+## MAIN
+case "${mode}" in
+	create)
+		create_env
+		;;
+esac
+
+exit 0

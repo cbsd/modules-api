@@ -1,0 +1,85 @@
+#!/usr/local/bin/cbsd
+#v13.0.1
+DIST_MODULE_PATH="${distmoduledir}/api.d"
+MYOPTARG="imgsize jname img ram cpus pubkey host_hostname ver"
+MYARG="mode"
+MYDESC="Operate with jail via API"
+CBSDMODULE="sys"
+ADDHELP="\
+"
+EXTHELP="wf_bhyve"
+MODULE_PATH="${dbdir}/bhyve"
+
+. ${subr}
+ip4_addr=
+. ${cbsdinit}
+. ${system}
+. ${strings}
+
+readconf api.conf
+readconf jail-api.conf
+
+[ -z "${ver}" ] && ver="native"
+
+set -e
+. ${distmoduledir}/api.d/api.subr
+set +e
+MY_LOG="${cbsd_api_logdir}/jail-api.log"
+log "wakeup: $*"
+
+create_env()
+{
+	local ssh_user=
+	local ssh_port=
+	local ssh_host=
+
+	eval vm_os_type="\$${img}_vm_os_type"
+	eval vm_os_profile="\$${img}_vm_os_profile"
+	eval ssh_user="\$${img}_ssh_user"
+
+	[ -z "${ssh_host}" ] && "ssh_host empty? check bhyve-api.conf"
+	[ -z "${vm_os_type}" ] && "vm_os_type empty? check img/mapping in bhyve-api.conf for: ${img}"
+	[ -z "${vm_os_profile}" ] && "vm_os_profile empty? check img/mapping in bhyve-api.conf for: ${img}"
+	[ -z "${ssh_user}" ] && "ssh_user empty? check img/mapping in bhyve-api.conf for: ${img}"
+
+	ip4_addr=$( dhcpd ip4pool=${ip4pool} )
+
+	# additional check for profile/type?
+
+	cid=$( ${MD5_CMD} -qs "${pubkey}" )
+	[ ! -d ${cbsd_api_dbdir}/${cid} ] && ${MKDIR_CMD} -p ${cbsd_api_dbdir}/${cid}
+	[ ! -d ${cbsd_api_dbdir}/${cid}/.ssh ] && ${MKDIR_CMD} -p ${cbsd_api_dbdir}/${cid}/.ssh
+	if [ ! -r ${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys ]; then
+		echo "${pubkey}" > ${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys
+		sync
+		#fflush?
+		sleep 1
+	fi
+	[ ! -d ${cbsd_api_dbdir}/${cid}/vms ] && ${MKDIR_CMD} -p ${cbsd_api_dbdir}/${cid}/vms
+
+	str="cbsd jcreate \
+		jname=${jname} \
+		host_hostname=\"${host_hostname}\" \
+		runasap=1 \
+		ip4_addr=\"${ip4_addr}\" \
+		ver=\"${ver}\" \
+		fsquota=\"${imgsize}\" \
+		ci_user_pubkey=\"${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys\" \
+		pkg_bootstrap=0 \
+		"
+
+	log "exec [${str}]"
+	${str}
+
+	echo $( hostname ) > ${cbsd_api_dbdir}/${cid}/${jname}.node
+	echo -n "ssh root@${ip4_addr} -p22" > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh
+}
+
+## MAIN
+case "${mode}" in
+	create)
+		create_env
+		;;
+esac
+
+exit 0

@@ -7,17 +7,24 @@ This module requires the beanstalkd, cbsd-mq-router and cbsd-mq-api, please inst
 
 To install module:
 
+  - cbsd module mode=install api
   - echo 'api.d' >> ~cbsd/etc/modules.conf
   - cbsd initenv
 
 Quick start:
 
   `service beanstalkd enable`
+
   `service cbsd-mq-router enable`
+
   `service cbsd-mq-api enable`
 
+
   `service beanstalkd start`
+
   `service cbsd-mq-router start`
+
   `service cbsd-mq-api start`
+
 
   Refer to the documentation page: https://www.bsdstore.ru/en/13.x/wf_api_ssi.html

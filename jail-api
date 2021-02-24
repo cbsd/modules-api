@@ -12,12 +12,24 @@ MODULE_PATH="${dbdir}/bhyve"
 
 . ${subr}
 ip4_addr=
+ver=
 . ${cbsdinit}
 . ${system}
 . ${strings}
 
 readconf api.conf
+
+over="${ver}"
+unset ver
 readconf jail-api.conf
+
+# the version from the module configuration file 
+# is more important than the user
+if [ -z "{ver}" ]; then
+	ver="${over}"
+else
+	unset over
+fi
 
 [ -z "${ver}" ] && ver="native"
 

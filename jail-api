@@ -37,10 +37,11 @@ create_env()
 	eval vm_os_profile="\$${img}_vm_os_profile"
 	eval ssh_user="\$${img}_ssh_user"
 
-	[ -z "${ssh_host}" ] && "ssh_host empty? check bhyve-api.conf"
-	[ -z "${vm_os_type}" ] && "vm_os_type empty? check img/mapping in bhyve-api.conf for: ${img}"
-	[ -z "${vm_os_profile}" ] && "vm_os_profile empty? check img/mapping in bhyve-api.conf for: ${img}"
-	[ -z "${ssh_user}" ] && "ssh_user empty? check img/mapping in bhyve-api.conf for: ${img}"
+	# not for jail
+	#[ -z "${ssh_host}" ] && err 1 "ssh_host empty? check bhyve-api.conf"
+	#[ -z "${vm_os_type}" ] && err 1 "vm_os_type empty? check img/mapping in bhyve-api.conf for: ${img}"
+	#[ -z "${vm_os_profile}" ] && err 1 "vm_os_profile empty? check img/mapping in bhyve-api.conf for: ${img}"
+	#[ -z "${ssh_user}" ] && err 1 "ssh_user empty? check img/mapping in bhyve-api.conf for: ${img}"
 
 	ip4_addr=$( dhcpd ip4pool=${ip4pool} )
 

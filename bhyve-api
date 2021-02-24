@@ -61,9 +61,9 @@ create_env()
 	eval ssh_user="\$${img}_ssh_user"
 
 	[ -z "${ssh_host}" ] && ssh_host="${nodeip}"
-	[ -z "${vm_os_type}" ] && "vm_os_type empty? check img/mapping in bhyve-api.conf for: ${img}"
-	[ -z "${vm_os_profile}" ] && "vm_os_profile empty? check img/mapping in bhyve-api.conf for: ${img}"
-	[ -z "${ssh_user}" ] && "ssh_user empty? check img/mapping in bhyve-api.conf for: ${img}"
+	[ -z "${vm_os_type}" ] && err 1 "vm_os_type empty? check img/mapping in bhyve-api.conf for: ${img}"
+	[ -z "${vm_os_profile}" ] && err 1 "vm_os_profile empty? check img/mapping in bhyve-api.conf for: ${img}"
+	[ -z "${ssh_user}" ] && err 1 "ssh_user empty? check img/mapping in bhyve-api.conf for: ${img}"
 
 	ip4_addr=$( dhcpd ip4pool=${ip4pool} )
 	[ -z "${ip4_gw}" ] && ip4_gw="10.0.0.1"

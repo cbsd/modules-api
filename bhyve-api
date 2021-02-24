@@ -89,6 +89,7 @@ create_env()
 	[ ! -d ${cbsd_api_dbdir}/${cid}/vms ] && ${MKDIR_CMD} -p ${cbsd_api_dbdir}/${cid}/vms
 
 	str="cbsd bcreate \
+inter=0 \
 jname=${jname} \
 runasap=1 \
 vm_cpus=${cpus} \

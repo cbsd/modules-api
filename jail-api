@@ -29,7 +29,7 @@ log "wakeup: $*"
 
 create_env()
 {
-	local ssh_user=
+	local ssh_user="root"		# always root for jail
 	local ssh_port=
 	local ssh_host=
 
@@ -83,7 +83,7 @@ create_env()
 
 	echo $( hostname ) > ${cbsd_api_dbdir}/${cid}/${jname}.node
 	echo "${host_hostname} (jail) ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}
-	echo -n "ssh root@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh
+	echo -n "ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh
 }
 
 ## MAIN

@@ -75,7 +75,8 @@ create_env()
 		port=22
 		ssh_host="${ip4_addr}"
 	else
-		port=$(( jname + 4000 ))
+		jname_id=$( echo ${jname} | ${TR_CMD} -d 'env' )
+		port=$(( jname_id + 4000 ))
 		log "expose mode=add jname=${jname} in=${port} out=22"
 		expose mode=add jname=${jname} in=${port} out=22
 	fi

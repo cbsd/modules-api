@@ -74,9 +74,11 @@ create_env()
 		log "expose mode=add jname=${jname} in=${port} out=22"
 		expose mode=add jname=${jname} in=${port} out=22
 	fi
+	[ -z "${cpus}" ] && cpus=0
+	[ -z "${ram}" ] && ram=0
 
 	echo $( hostname ) > ${cbsd_api_dbdir}/${cid}/${jname}.node
-	echo "${host_hostname} (jail) ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}
+	echo "${host_hostname} (jail:${ver}) ${cpus}/${ram}/${imgsize} ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}
 	echo -n "ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh
 }
 

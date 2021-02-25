@@ -12,24 +12,12 @@ MODULE_PATH="${dbdir}/bhyve"
 
 . ${subr}
 ip4_addr=
-ver=
 . ${cbsdinit}
 . ${system}
 . ${strings}
 
 readconf api.conf
-
-over="${ver}"
-unset ver
 readconf jail-api.conf
-
-# the version from the module configuration file 
-# is more important than the user
-if [ -z "{ver}" ]; then
-	ver="${over}"
-else
-	unset over
-fi
 
 [ -z "${ver}" ] && ver="native"
 
@@ -49,11 +37,10 @@ create_env()
 	eval vm_os_profile="\$${img}_vm_os_profile"
 	eval ssh_user="\$${img}_ssh_user"
 
-	# not for jail
-	#[ -z "${ssh_host}" ] && err 1 "ssh_host empty? check bhyve-api.conf"
-	#[ -z "${vm_os_type}" ] && err 1 "vm_os_type empty? check img/mapping in bhyve-api.conf for: ${img}"
-	#[ -z "${vm_os_profile}" ] && err 1 "vm_os_profile empty? check img/mapping in bhyve-api.conf for: ${img}"
-	#[ -z "${ssh_user}" ] && err 1 "ssh_user empty? check img/mapping in bhyve-api.conf for: ${img}"
+	[ -z "${ssh_host}" ] && ssh_host="${nodeip}"
+	[ -z "${vm_os_type}" ] && "vm_os_type empty? check img/mapping in bhyve-api.conf for: ${img}"
+	[ -z "${vm_os_profile}" ] && "vm_os_profile empty? check img/mapping in bhyve-api.conf for: ${img}"
+	[ -z "${ssh_user}" ] && "ssh_user empty? check img/mapping in bhyve-api.conf for: ${img}"
 
 	ip4_addr=$( dhcpd ip4pool=${ip4pool} )
 
@@ -71,7 +58,6 @@ create_env()
 	[ ! -d ${cbsd_api_dbdir}/${cid}/vms ] && ${MKDIR_CMD} -p ${cbsd_api_dbdir}/${cid}/vms
 
 	str="cbsd jcreate \
-		inter=0 \
 		jname=${jname} \
 		host_hostname=\"${host_hostname}\" \
 		runasap=1 \
@@ -85,8 +71,18 @@ create_env()
 	log "exec [${str}]"
 	${str}
 
+	if [ "${nodeip_expose}" = "0" ]; then
+		port=22
+		ssh_host="${ip4_addr}"
+	else
+		port=$(( jname + 4000 ))
+		log "expose mode=add jname=${jname} in=${port} out=22"
+		expose mode=add jname=${jname} in=${port} out=22
+	fi
+
 	echo $( hostname ) > ${cbsd_api_dbdir}/${cid}/${jname}.node
-	echo -n "ssh root@${ip4_addr} -p22" > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh
+	echo "${host_hostname} (jail) ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}
+	echo -n "ssh root@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh
 }
 
 ## MAIN

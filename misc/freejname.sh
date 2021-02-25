@@ -18,13 +18,13 @@ get_recomendation()
 
 	if [ -z "${next_uid}" ]; then
 		sysrc -qf ${_conf} next_uid="1" > /dev/null 2>&1
-		echo -n "1"
+		echo -n "env1"
 		exit 0
 	fi
 
 	next_uid=$(( next_uid + 1 ))
 	sysrc -qf ${_conf} next_uid="${next_uid}" > /dev/null 2>&1
-	echo -n "${next_uid}"
+	echo -n "env${next_uid}"
 	exit 0
 }
 

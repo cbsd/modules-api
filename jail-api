@@ -53,7 +53,7 @@ create_env()
 
 	str="cbsd jcreate \
 		jname=${jname} \
-		host_hostname=\"${host_hostname}\" \
+		host_hostname=\"${jname}.my.domain\" \
 		runasap=1 \
 		ip4_addr=\"${ip4_addr}\" \
 		ver=\"${ver}\" \

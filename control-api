@@ -34,7 +34,7 @@ destroy_env()
 		fi
 	done
 
-	[ -n "${api_postdestroy_hook}" -a -x "${api_postdestroy_hook}" ] && ${api_postdestroy_hook} -c ${cid} -j ${jname} -m create -r ${cbsd_api_dbdir}
+	[ -n "${api_postdestroy_hook}" -a -x "${api_postdestroy_hook}" ] && ${api_postdestroy_hook} -c ${cid} -j ${jname} -m destroy -r ${cbsd_api_dbdir}
 }
 
 . ${jrcconf}

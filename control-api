@@ -33,6 +33,8 @@ destroy_env()
 			${RM_CMD} -f ${_dir}/${jname} ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh ${cbsd_api_dbdir}/${cid}/${jname}.node
 		fi
 	done
+
+	[ -n "${api_postdestroy_hook}" -a -x "${api_postdestroy_hook}" ] && ${api_postdestroy_hook} -c ${cid} -j ${jname} -m create -r ${cbsd_api_dbdir}
 }
 
 . ${jrcconf}

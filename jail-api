@@ -41,15 +41,26 @@ create_env()
 	# additional check for profile/type?
 
 	cid=$( ${MD5_CMD} -qs "${pubkey}" )
-	[ ! -d ${cbsd_api_dbdir}/${cid} ] && ${MKDIR_CMD} -p ${cbsd_api_dbdir}/${cid}
-	[ ! -d ${cbsd_api_dbdir}/${cid}/.ssh ] && ${MKDIR_CMD} -p ${cbsd_api_dbdir}/${cid}/.ssh
+
+	if [ ! -d ${cbsd_api_dbdir}/${cid} ]; then
+		${MKDIR_CMD} -m 0770 -p ${cbsd_api_dbdir}/${cid}
+		${CHOWN_CMD} ${cbsduser}:${cbsduser} ${cbsd_api_dbdir}/${cid}
+	fi
+	if [ ! -d ${cbsd_api_dbdir}/${cid}/.ssh ]; then
+		${MKDIR_CMD} -m 0770 -p ${cbsd_api_dbdir}/${cid}/.ssh
+		${CHOWN_CMD} ${cbsduser}:${cbsduser} ${cbsd_api_dbdir}/${cid}/.ssh
+	fi
 	if [ ! -r ${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys ]; then
 		echo "${pubkey}" > ${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys
+		${CHOWN_CMD} ${cbsduser}:${cbsduser} ${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys
 		sync
 		#fflush?
 		sleep 1
 	fi
-	[ ! -d ${cbsd_api_dbdir}/${cid}/vms ] && ${MKDIR_CMD} -p ${cbsd_api_dbdir}/${cid}/vms
+	if [ ! -d ${cbsd_api_dbdir}/${cid}/vms ]; then
+		${MKDIR_CMD} -m 0770 -p ${cbsd_api_dbdir}/${cid}/vms
+		${CHOWN_CMD} ${cbsduser}:${cbsduser} ${cbsd_api_dbdir}/${cid}/vms
+	fi
 
 	str="cbsd jcreate \
 		jname=${jname} \
@@ -72,7 +83,7 @@ create_env()
 		jname_id=$( echo ${jname} | ${TR_CMD} -d 'env' )
 		port=$(( jname_id + 4000 ))
 		log "expose mode=add jname=${jname} in=${port} out=22"
-		expose mode=add jname=${jname} in=${port} out=22
+		expose mode=add jname=${jname} in=${port} out=22 >> ${MY_LOG}
 	fi
 	[ -z "${cpus}" ] && cpus=0
 	[ -z "${ram}" ] && ram=0
@@ -80,6 +91,7 @@ create_env()
 	echo $( hostname ) > ${cbsd_api_dbdir}/${cid}/${jname}.node
 	echo "${host_hostname} (jail:${ver}) ${cpus}/${ram}/${imgsize} ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}
 	echo -n "ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh
+	${CHOWN_CMD} ${cbsduser}:${cbsduser} ${cbsd_api_dbdir}/${cid}/vms/${jname} ${cbsd_api_dbdir}/${cid}/${jname}.node ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh
 
 	[ -n "${api_postcreate_hook}" -a -x "${api_postcreate_hook}" ] && ${api_postcreate_hook} -c ${cid} -j ${jname} -m create -r ${cbsd_api_dbdir}
 }

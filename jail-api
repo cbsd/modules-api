@@ -77,7 +77,7 @@ create_env()
 		fsquota=\"${imgsize}\" \
 		ci_user_pubkey=\"${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys\" \
 		pkg_bootstrap="${pkg_bootstrap}" \
-		pkglist="${pkglist}" \
+		pkglist=\"${pkglist}\" \
 		"
 
 	log "exec [${str}]"

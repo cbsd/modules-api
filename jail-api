@@ -62,6 +62,12 @@ create_env()
 		${CHOWN_CMD} ${cbsduser}:${cbsduser} ${cbsd_api_dbdir}/${cid}/vms
 	fi
 
+	if [ -n "${pkglist}" ]; then
+		pkg_bootstrap="1"
+	else
+		pkg_bootstrap="0"
+	fi
+
 	str="cbsd jcreate \
 		jname=${jname} \
 		host_hostname=\"${jname}.my.domain\" \
@@ -70,7 +76,8 @@ create_env()
 		ver=\"${ver}\" \
 		fsquota=\"${imgsize}\" \
 		ci_user_pubkey=\"${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys\" \
-		pkg_bootstrap=0 \
+		pkg_bootstrap="${pkg_bootstrap}" \
+		pkglist="${pkglist}" \
 		"
 
 	log "exec [${str}]"

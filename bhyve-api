@@ -141,7 +141,8 @@ ci_fqdn="${host_hostname}.my.domain" \
 		err 1 "unable to read vnc port file: ${cbsd_workdir}/vm/${jname}/vnc_port"
 	fi
 
-	sleep 1
+	# for slow hdd/vm startup
+	sleep 5
 
 	if [ "${nodeip_expose}" = "0" ]; then
 		port=22

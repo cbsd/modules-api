@@ -34,6 +34,8 @@ ssh_host=
 readconf api.conf
 readconf bhyve-api.conf
 
+[ -n "${ip4_gw}" ] && oip4_gw="${ip4_gw}"
+
 set -e
 . ${distmoduledir}/api.d/api.subr
 set +e
@@ -50,6 +52,7 @@ ip4_gw=
 . ${system}
 . ${strings}
 
+[ -z "${ip4_gw}" -a -n "${oip4_gw}" ] && ip4_gw="${oip4_gw}"
 
 create_env()
 {

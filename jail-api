@@ -93,8 +93,8 @@ create_env()
 		expose mode=add jname=${jname} in=${port} out=22 >> ${MY_LOG}
 	fi
 
-	[ -z "${cpus}" ] && cpus=1
-	[ -z "${ram}" ] && ram="1g"
+	cpus=1
+	ram="1g"
 
 	echo $( hostname ) > ${cbsd_api_dbdir}/${cid}/${jname}.node
 

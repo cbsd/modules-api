@@ -96,7 +96,9 @@ create_env()
 	cpus=1
 	ram="1g"
 
-	echo $( hostname ) > ${cbsd_api_dbdir}/${cid}/${jname}.node
+	hostname=$( hostname )
+
+	echo "${hostname}" > ${cbsd_api_dbdir}/${cid}/${jname}.node
 
 	if is_number "${imgsize}"; then
 		if conv2bytes ${imgsize}; then
@@ -140,8 +142,8 @@ create_env()
 EOF
 	# dup to param-values
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/vms/${jname} <<EOF
-jname="${jname}"
-host_hostname="${host_hostname}"
+gid="${jname}"
+hostname="${hostname}"
 ver="${ver}"
 type="container"
 is_power_on="true"

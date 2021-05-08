@@ -183,7 +183,9 @@ ci_fqdn="${host_hostname}.my.domain" \
 
 	#echo "${host_hostname} (${vm_os_type}:${vm_os_profile}) ${cpus}/${ram}/${imgsize} ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}
 
-	echo $( hostname ) > ${cbsd_api_dbdir}/${cid}/${jname}.node
+	hostname=$( hostname )
+
+	echo "${hostname}" > ${cbsd_api_dbdir}/${cid}/${jname}.node
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh <<EOF
 {
   "type": "vm",
@@ -204,8 +206,8 @@ ci_fqdn="${host_hostname}.my.domain" \
 EOF
         # dup to param-values
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/vms/${jname} <<EOF
-jname="${jname}"
-host_hostname="${host_hostname}"
+gid="${jname}"
+hostname="$hostname}"
 type="vm"
 is_power_on="true"
 created="${create_time}"

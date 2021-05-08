@@ -92,11 +92,11 @@ create_env()
 		log "expose mode=add jname=${jname} in=${port} out=22"
 		expose mode=add jname=${jname} in=${port} out=22 >> ${MY_LOG}
 	fi
-	[ -z "${cpus}" ] && cpus=0
-	[ -z "${ram}" ] && ram=0
+
+	[ -z "${cpus}" ] && cpus=1
+	[ -z "${ram}" ] && ram="1g"
 
 	echo $( hostname ) > ${cbsd_api_dbdir}/${cid}/${jname}.node
-	echo "${host_hostname} (jail:${ver}) ${cpus}/${ram}/${imgsize} ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}
 
 	if is_number "${imgsize}"; then
 		if conv2bytes ${imgsize}; then
@@ -108,9 +108,6 @@ create_env()
 		# already on bytes?
 		imgsize_bytes="${imgsize}"
 	fi
-
-	cpus=1
-	ram="1g"
 
 	if is_number "${ram}"; then
 		if conv2bytes ${ram}; then
@@ -141,6 +138,26 @@ create_env()
   "ssh_string": "ssh ${ssh_user}@${ssh_host} -p${port}"
 }
 EOF
+	# dup to param-values
+	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/vms/${jname} <<EOF
+host_hostname="${host_hostname}"
+ver="${ver}"
+type="container"
+is_power_on="true"
+created="${create_time}"
+cpus="${cpus}"
+ram_bytes="${ram_bytes}"
+ram_human="${ram}"
+imgsize_bytes="${imgsize_bytes}"
+imgsize_human="${imgsize}"
+ssh_user="${ssh_user}"
+ssh_host="${ssh_host}"
+ssh_port="${port}"
+ssh_string="ssh ${ssh_user}@${ssh_host} -p${port}"
+EOF
+
+#	echo "${host_hostname} (jail:${ver}) ${cpus}/${ram}/${imgsize} ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}
+
 
 	#echo -n "ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh
 	${CHOWN_CMD} ${cbsduser}:${cbsduser} ${cbsd_api_dbdir}/${cid}/vms/${jname} ${cbsd_api_dbdir}/${cid}/${jname}.node ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh

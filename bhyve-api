@@ -181,7 +181,8 @@ ci_fqdn="${host_hostname}.my.domain" \
 
 	create_time=$( ${DATE_CMD} -u "+%Y-%m-%dT%H:%M:%S" )
 
-	echo "${host_hostname} (${vm_os_type}:${vm_os_profile}) ${cpus}/${ram}/${imgsize} ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}
+	#echo "${host_hostname} (${vm_os_type}:${vm_os_profile}) ${cpus}/${ram}/${imgsize} ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}
+
 	echo $( hostname ) > ${cbsd_api_dbdir}/${cid}/${jname}.node
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh <<EOF
 {
@@ -201,7 +202,25 @@ ci_fqdn="${host_hostname}.my.domain" \
   "ssh_string": "ssh ${ssh_user}@${ssh_host} -p${port}"
 }
 EOF
-	#echo -n "ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh
+        # dup to param-values
+	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/vms/${jname} <<EOF
+host_hostname="${host_hostname}"
+type="vm"
+is_power_on="true"
+created="${create_time}"
+cpus="${cpus}"
+ram_bytes="${ram_bytes}"
+ram_human="${ram}"
+imgsize_bytes="${imgsize_bytes}"
+imgsize_human="${imgsize}"
+vm_os_type="${vm_os_type}"
+vm_os_profile="${vm_os_profile}"
+ssh_user="${ssh_user}"
+ssh_host="${ssh_host}"
+ssh_port="${port}"
+ssh_string="ssh ${ssh_user}@${ssh_host} -p${port}"
+EOF
+
 	${CHOWN_CMD} ${cbsduser}:${cbsduser} ${cbsd_api_dbdir}/${cid}/vms/${jname} ${cbsd_api_dbdir}/${cid}/${jname}.node ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh
 
 	[ -n "${api_postcreate_hook}" -a -x "${api_postcreate_hook}" ] && ${api_postcreate_hook} -c ${cid} -j ${jname} -m create -r ${cbsd_api_dbdir}

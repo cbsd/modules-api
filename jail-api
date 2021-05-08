@@ -140,6 +140,7 @@ create_env()
 EOF
 	# dup to param-values
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/vms/${jname} <<EOF
+jname="${jname}"
 host_hostname="${host_hostname}"
 ver="${ver}"
 type="container"

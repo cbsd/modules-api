@@ -112,7 +112,7 @@ create_env()
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh <<EOF
 {
   "type": "container",
-  "imgsize_bytes": ${imgsize_bytes}",
+  "imgsize_bytes": ${imgsize_bytes},
   "imgsize_human": "${imgsize}",
   "ssh_user": "${ssh_user}",
   "ssh_host": "${ssh_host}",

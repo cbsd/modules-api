@@ -126,6 +126,7 @@ create_env()
 
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh <<EOF
 {
+  "instanceid": "${host_hostname}",
   "type": "container",
   "is_power_on": true,
   "created": "${create_time}",
@@ -142,6 +143,7 @@ create_env()
 EOF
 	# dup to param-values
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/vms/${jname} <<EOF
+host_hostname="${host_hostname}"
 gid="${jname}"
 hostname="${hostname}"
 ver="${ver}"

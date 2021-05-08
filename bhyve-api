@@ -157,19 +157,31 @@ ci_fqdn="${host_hostname}.my.domain" \
 		expose mode=add jname=${jname} in=${port} out=22 >> ${MY_LOG}
 	fi
 
+	if is_number "${imgsize}"; then
+		if conv2bytes ${imgsize}; then
+			imgsize_bytes="${convval}"
+		else
+			imgsize_bytes="0"
+		fi
+	else
+		# already on bytes?
+		imgsize_bytes="${imgsize}"
+	fi
+
 	echo "${host_hostname} (${vm_os_type}:${vm_os_profile}) ${cpus}/${ram}/${imgsize} ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}
 	echo $( hostname ) > ${cbsd_api_dbdir}/${cid}/${jname}.node
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh <<EOF
 {
   "type": "vm",
-  "cpus": "${cpus}",
-  "ram": "${ram}",
-  "imgsize": "${imgsize}",
+  "cpus": ${cpus},
+  "ram": ${ram},
+  "imgsize_bytes": ${imgsize_bytes},
+  "imgsize_human": "${imgsize}",
   "vm_os_type": "${vm_os_type}",
   "vm_os_profile": "${vm_os_profile}",
   "ssh_user": "${ssh_user}",
   "ssh_host": "${ssh_host}",
-  "ssh_port": "${port}",
+  "ssh_port": ${port},
   "ssh_string": "ssh ${ssh_user}@${ssh_host} -p${port}"
 }
 EOF

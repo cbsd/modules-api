@@ -97,13 +97,26 @@ create_env()
 
 	echo $( hostname ) > ${cbsd_api_dbdir}/${cid}/${jname}.node
 	echo "${host_hostname} (jail:${ver}) ${cpus}/${ram}/${imgsize} ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}
+
+	if is_number "${imgsize}"; then
+		if conv2bytes ${imgsize}; then
+			imgsize_bytes="${convval}"
+		else
+			imgsize_bytes="0"
+		fi
+	else
+		# already on bytes?
+		imgsize_bytes="${imgsize}"
+	fi
+
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh <<EOF
 {
   "type": "container",
-  "imgsize": "${imgsize}",
+  "imgsize_bytes": ${imgsize_bytes}",
+  "imgsize_human": "${imgsize}",
   "ssh_user": "${ssh_user}",
   "ssh_host": "${ssh_host}",
-  "ssh_port": "${port}",
+  "ssh_port": ${port},
   "ssh_string": "ssh ${ssh_user}@${ssh_host} -p${port}"
 }
 EOF

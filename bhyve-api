@@ -168,13 +168,29 @@ ci_fqdn="${host_hostname}.my.domain" \
 		imgsize_bytes="${imgsize}"
 	fi
 
+	if is_number "${ram}"; then
+		if conv2bytes ${ram}; then
+			ram_bytes="${convval}"
+		else
+			ram_bytes="0"
+		fi
+	else
+		# already on bytes?
+		ram_bytes="${ram}"
+	fi
+
+	create_time=$( ${DATE_CMD} -u "+%Y-%m-%dT%H:%M:%S" )
+
 	echo "${host_hostname} (${vm_os_type}:${vm_os_profile}) ${cpus}/${ram}/${imgsize} ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}
 	echo $( hostname ) > ${cbsd_api_dbdir}/${cid}/${jname}.node
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh <<EOF
 {
   "type": "vm",
+  "is_power_on": true,
+  "created": "${create_time}",
   "cpus": ${cpus},
-  "ram": ${ram},
+  "ram_bytes": ${ram_bytes},
+  "ram_human": "${ram}",
   "imgsize_bytes": ${imgsize_bytes},
   "imgsize_human": "${imgsize}",
   "vm_os_type": "${vm_os_type}",

@@ -109,9 +109,30 @@ create_env()
 		imgsize_bytes="${imgsize}"
 	fi
 
+	cpus=1
+	ram="1g"
+
+	if is_number "${ram}"; then
+		if conv2bytes ${ram}; then
+			ram_bytes="${convval}"
+		else
+			ram_bytes="0"
+		fi
+	else
+		# already on bytes?
+		ram_bytes="${ram}"
+	fi
+
+	create_time=$( ${DATE_CMD} -u "+%Y-%m-%dT%H:%M:%S" )
+
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh <<EOF
 {
   "type": "container",
+  "is_power_on": true,
+  "created": "${create_time}",
+  "cpus": ${cpus},
+  "ram_bytes": ${ram_bytes},
+  "ram_human": "${ram}",
   "imgsize_bytes": ${imgsize_bytes},
   "imgsize_human": "${imgsize}",
   "ssh_user": "${ssh_user}",

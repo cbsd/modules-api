@@ -209,7 +209,7 @@ EOF
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/vms/${jname} <<EOF
 host_hostname="${host_hostname}"
 gid="${jname}"
-hostname="$hostname}"
+hostname="${hostname}"
 type="vm"
 is_power_on="true"
 created="${create_time}"

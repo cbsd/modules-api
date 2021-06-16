@@ -68,9 +68,11 @@ create_env()
 		pkg_bootstrap="0"
 	fi
 
+	[ -z "${host_hostname}" ] && host_hostname="${jname}.my.domain"
+
 	str="cbsd jcreate \
 		jname=${jname} \
-		host_hostname=\"${jname}.my.domain\" \
+		host_hostname=\"${host_hostname}\" \
 		runasap=1 \
 		ip4_addr=\"${ip4_addr}\" \
 		ver=\"${ver}\" \

@@ -71,7 +71,12 @@ create_env()
 	ip4_addr=$( dhcpd ip4pool=${ip4pool} )
 	[ -z "${ip4_gw}" ] && ip4_gw="10.0.0.1"
 	ci_jname="${jname}"
-	ci_fqdn="${jname}.my.domain"
+
+	if [ -n "${host_hostname}" ]; then
+		ci_fqdn="${host_hostname}"
+	else
+		ci_fqdn="${jname}.my.domain"
+	fi
 	ci_ip4_addr="${ip4_addr}"
 	ci_gw4="${ip4_gw}"
 
@@ -112,13 +117,12 @@ imgsize=${imgsize} \
 vm_os_type=\"${vm_os_type}\" \
 vm_os_profile=\"${vm_os_profile}\" \
 ci_jname=\"${jname}\" \
-ci_fqdn=\"${jname}.my.domain\" \
+ci_fqdn=\"${ci_fqdn}\" \
 ci_ip4_addr=\"${ip4_addr}\" \
 ci_gw4=\"${ip4_gw}\" \
 ip4_addr=\"${ip4_addr}\" \
 ci_user_pubkey=\"${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys\" \
-ci_jname="${host_hostname}" \
-ci_fqdn="${host_hostname}.my.domain" \
+ci_jname=\"${ci_fqdn}\" \
 "
 
 	log "${str}"

@@ -1,7 +1,7 @@
 #!/usr/local/bin/cbsd
 #v13.0.1
 DIST_MODULE_PATH="${distmoduledir}/api.d"
-MYOPTARG="imgsize jname img ram cpus pubkey host_hostname ver"
+MYOPTARG="imgsize jname img ram cpus pubkey host_hostname ver extras"
 MYARG="mode"
 MYDESC="Operate with jail via API"
 CBSDMODULE="sys"
@@ -36,10 +36,110 @@ create_env()
 	[ -z "${ssh_host}" ] && ssh_host="${nodeip}"
 	[ -z "${ssh_user}" ] && err 1 "ssh_user empty? check img/mapping in bhyve-api.conf for: ${img}"
 
-	ip4_addr=$( dhcpd ip4pool=${ip4pool} )
+	# extras area
+	v6_addr=
+	v4_addr=
+	primary_ip=
+	ip4_addr=
+	ossh_port=
+	port=
+
+	if [ -n "${extras}" ]; then
+		# strip special: must be performed on the API first
+		extras=$( echo ${extras} | ${TR_CMD} -dc '[:alnum:]:,\n\r' | ${TR_CMD} '[:upper:]' '[:lower:]' )
+		log "EXTRAS [${extras}]"
+	fi
+
+	exec_extras=
+
+	if [ -n "${extras}" ]; then
+
+		for i in ${jail_known_extras}; do
+			unset ${i}
+		done
+
+		OIFS="${IFS}"
+		IFS=","
+		for i in ${extras}; do
+			IFS="${OIFS}"
+			extras_name=$( echo ${i} | cut -d ":" -f 1 )
+			known=0
+			for x in ${jail_known_extras}; do
+				log "extras check [${x}][${extras_name}]"
+				if [ "${x}" = "${extras_name}" ]; then
+					known=1
+				fi
+			done
+
+			if [ ${known} -eq 1 ]; then
+				#extras_val=$( echo ${i} | cut -d ":" -f 2 )
+				_arg_len=$( strlen ${i} )
+				strpos --str="${i}" --search=":"
+				_eqpos=$?
+				_eqpos=$(( _eqpos + 2 ))
+				extras_val=$( substr --pos=${_eqpos} --len=${_arg_len} --str="${i}" )
+				log "known extras found: ${extras_name}, val: [${extras_val}]"
+				eval "${extras_name}=\"${extras_val}\""
+
+				if [ -z "${exec_extras}" ]; then
+					exec_extras="${extras_name}"
+				else
+					exec_extras="${exec_extras} ${extras_name}"
+				fi
+			else
+				log "Unknown extras: ${extras_name}"
+			fi
+			IFS=","
+		done
+		IFS="${OIFS}"
+
+		if [ "${ipv6}" = "external" ]; then
+			v6_addr=$( dhcpdv6 )
+			primary_ip="${v6_addr}"
+			ssh_host="${primary_ip}"
+			ossh_port="22"
+			v4_addr=$( dhcpd ip4pool=${ip4pool} )
+		else
+			v4_addr=$( dhcpd ip4pool=${ip4pool} )
+			primary_ip="${v4_addr}"
+		fi
+	else
+		v4_addr=$( dhcpd ip4pool=${ip4pool} )
+		primary_ip="${v4_addr}"
+	fi
+
+	log "exec extras: ${exec_extras}"
+
+	for i in ${exec_extras}; do
+		log "looking for helper : ${i}"
+		#helper_var="extras_helper_${i}"
+		#log "looking for helper : ${helper_var}"
+		#eval helper="\$helper_var"
+
+		eval helper="\$extras_helper_$i"
+
+		if [ -x "${helper}" ]; then
+			log "HELPER FOUND for ${i}: [${helper}]"
+			letsencrypt_args=
+			[ -n "${letsencrypt}" ] && letsencrypt_args="-l true"
+			log "EXEC HELPER: ${helper} -m create -n \"${lb}\" -a \"${v4_addr}\" -b \"${v6_addr}\" ${letsencrypt_args}"
+			${helper} -m create -n "${lb}" -a "${v4_addr}" -b "${v6_addr}" ${letsencrypt_args} >> ${MY_LOG} 2>&1
+			ret=$?
+			# todo: notify for error
+		else
+			log "HELPER for ${i} not found: ${helper}!"
+		fi
+	done
+
+	for i in ${v6_addr} ${v4_addr}; do
+		if [ -z "${ip4_addr}" ]; then
+			ip4_addr="${i}"
+		else
+			ip4_addr="${ip4_addr},${i}"
+		fi
+	done
 
 	# additional check for profile/type?
-
 	cid=$( ${MD5_CMD} -qs "${pubkey}" )
 
 	if [ ! -d ${cbsd_api_dbdir}/${cid} ]; then
@@ -88,12 +188,16 @@ create_env()
 
 	if [ "${nodeip_expose}" = "0" ]; then
 		port=22
-		ssh_host="${ip4_addr}"
+		ssh_host="${primary_ip}"
 	else
-		jname_id=$( echo ${jname} | ${TR_CMD} -d 'env' )
-		port=$(( jname_id + 4000 ))
-		log "expose mode=add jname=${jname} in=${port} out=22"
-		expose mode=add jname=${jname} in=${port} out=22 >> ${MY_LOG}
+		if [ -n "${ossh_port}" ]; then
+			port=22
+		else
+			jname_id=$( echo ${jname} | ${TR_CMD} -d 'env' )
+			port=$(( jname_id + 4000 ))
+			log "expose mode=add jname=${jname} in=${port} out=22 outaddr=${v4_addr}"
+			expose mode=add jname=${jname} in=${port} out=22 outaddr=${v4_addr} >> ${MY_LOG}
+		fi
 	fi
 
 	cpus=1
@@ -127,6 +231,11 @@ create_env()
 
 	create_time=$( ${DATE_CMD} -u "+%Y-%m-%dT%H:%M:%S" )
 
+	[ -z "${port4}" ] && port4="${port}"
+	[ -z "${port6}" ] && port6="${port}"
+	[ -z "${ssh4_host}" ] && ssh4_host="${v4_addr}"
+	[ -z "${ssh6_host}" ] && ssh6_host="${v6_addr}"
+
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh <<EOF
 {
   "instanceid": "${host_hostname}",
@@ -140,8 +249,14 @@ create_env()
   "imgsize_human": "${imgsize}",
   "ssh_user": "${ssh_user}",
   "ssh_host": "${ssh_host}",
+  "ssh4_host": "${ssh4_host}",
+  "ssh6_host": "${ssh6_host}",
   "ssh_port": ${port},
-  "ssh_string": "ssh ${ssh_user}@${ssh_host} -p${port}"
+  "ssh4_port": ${port4},
+  "ssh6_port": ${port6},
+  "ssh_string": "ssh ${ssh_user}@${ssh_host} -p${port}",
+  "ssh4_string": "ssh ${ssh_user}@${ssh4_host} -p${port4}",
+  "ssh6_string": "ssh ${ssh_user}@${ssh6_host} -p${port6}"
 }
 EOF
 	# dup to param-values
@@ -160,8 +275,14 @@ imgsize_bytes="${imgsize_bytes}"
 imgsize_human="${imgsize}"
 ssh_user="${ssh_user}"
 ssh_host="${ssh_host}"
+ssh4_host="${ssh4_host}"
+ssh6_host="${ssh6_host}"
 ssh_port="${port}"
+ssh_port4="${port4}"
+ssh_port6="${port6}"
 ssh_string="ssh ${ssh_user}@${ssh_host} -p${port}"
+ssh4_string="ssh ${ssh_user}@${ssh4_host} -p${port4}"
+ssh6_string="ssh ${ssh_user}@${ssh6_host} -p${port6}"
 EOF
 
 #	echo "${host_hostname} (jail:${ver}) ${cpus}/${ram}/${imgsize} ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}

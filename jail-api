@@ -1,7 +1,7 @@
 #!/usr/local/bin/cbsd
 #v13.0.1
 DIST_MODULE_PATH="${distmoduledir}/api.d"
-MYOPTARG="imgsize jname img ram cpus pubkey host_hostname ver extras"
+MYOPTARG="imgsize jname img ram cpus pubkey host_hostname ver extras pkglist"
 MYARG="mode"
 MYDESC="Operate with jail via API"
 CBSDMODULE="sys"

@@ -360,4 +360,8 @@ case "${mode}" in
 		;;
 esac
 
+# temporary hack/mock for standalone no-DB API version
+[ -x /root/bin/tubestat.sh ] && /root/bin/tubestat.sh > /dev/null 2>&1
+[ -x /root/bin/update_cluster_status.sh ] && /root/bin/update_cluster_status.sh > /dev/null 2>&1
+
 exit 0

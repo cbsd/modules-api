@@ -139,6 +139,10 @@ create_env()
 		primary_ip="${v4_addr}"
 	fi
 
+	if [ -n "${ci_gw42}" ]; then
+		v6_addr=$( dhcpdv6 )
+	fi
+
 	log "exec extras: ${exec_extras}"
 
 	for i in ${exec_extras}; do
@@ -162,13 +166,15 @@ create_env()
 		fi
 	done
 
-	for i in ${v6_addr} ${v4_addr}; do
-		if [ -z "${ip4_addr}" ]; then
-			ip4_addr="${i}"
-		else
-			ip4_addr="${ip4_addr},${i}"
-		fi
-	done
+	ip4_addr="${v4_addr}"
+
+#	for i in ${v4_addr} ${v6_addr}; do
+#		if [ -z "${ip4_addr}" ]; then
+#			ip4_addr="${i}"
+#		else
+#			ip4_addr="${ip4_addr},${i}"
+#		fi
+#	done
 
 	#ip4_addr=$( dhcpd ip4pool=${ip4pool} )
 	[ -z "${ip4_gw}" ] && ip4_gw="10.0.0.1"
@@ -210,22 +216,11 @@ create_env()
 		${CHOWN_CMD} ${cbsduser}:${cbsduser} ${cbsd_api_dbdir}/${cid}/vms
 	fi
 
-	str="cbsd bcreate \
-jname=${jname} \
-runasap=1 \
-vm_cpus=${cpus} \
-vm_ram=${ram} \
-imgsize=${imgsize} \
-vm_os_type=\"${vm_os_type}\" \
-vm_os_profile=\"${vm_os_profile}\" \
-ci_jname=\"${jname}\" \
-ci_fqdn=\"${ci_fqdn}\" \
-ci_ip4_addr=\"${ip4_addr}\" \
-ci_gw4=\"${ip4_gw}\" \
-ip4_addr=\"${ip4_addr}\" \
-ci_user_pubkey=\"${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys\" \
-ci_jname=\"${ci_fqdn}\" \
-"
+	if [ -n "${ci_gw42}" ]; then
+		str="cbsd bcreate jname=${jname} runasap=1 vm_cpus=${cpus} vm_ram=${ram} imgsize=${imgsize} vm_os_type=\"${vm_os_type}\" vm_os_profile=\"${vm_os_profile}\" ci_jname=\"${jname}\" ci_fqdn=\"${ci_fqdn}\" ci_ip4_addr=\"${ip4_addr}\" ci_gw4=\"${ip4_gw}\" ip4_addr=\"${ip4_addr}\" ci_user_pubkey=\"${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys\" ci_jname=\"${ci_fqdn}\" ci_ip4_addr2=\"${v6_addr}\" ci_user_pw_root=\"cbsd\""
+	else
+		str="cbsd bcreate jname=${jname} runasap=1 vm_cpus=${cpus} vm_ram=${ram} imgsize=${imgsize} vm_os_type=\"${vm_os_type}\" vm_os_profile=\"${vm_os_profile}\" ci_jname=\"${jname}\" ci_fqdn=\"${ci_fqdn}\" ci_ip4_addr=\"${ip4_addr}\" ci_gw4=\"${ip4_gw}\" ip4_addr=\"${ip4_addr}\" ci_user_pubkey=\"${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys\" ci_jname=\"${ci_fqdn}\""
+	fi
 
 	log "${str}"
 	${str}
@@ -287,7 +282,7 @@ ci_jname=\"${ci_fqdn}\" \
 
 	create_time=$( ${DATE_CMD} -u "+%Y-%m-%dT%H:%M:%S" )
 	[ -z "${port4}" ] && port4="${port}"
-	[ -z "${port6}" ] && port6="${port}"
+	[ -z "${port6}" ] && port6="22"
 	[ -z "${ssh4_host}" ] && ssh4_host="${v4_addr}"
 	[ -z "${ssh6_host}" ] && ssh6_host="${v6_addr}"
 

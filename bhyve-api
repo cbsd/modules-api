@@ -4,7 +4,7 @@ DIST_MODULE_PATH="${distmoduledir}/bhyve.d"
 . ${DIST_MODULE_PATH}/share/bhyve.conf
 
 #OPTARGS="${MYCOL} init_masters init_workers"
-MYOPTARG="imgsize jname img ram cpus pubkey host_hostname extras"
+MYOPTARG="imgsize jname img ram cpus pubkey host_hostname extras ci_user_pw_user ci_user_pw_root bhyve_vnc_tcp_bind"
 MYARG="mode"
 MYDESC="Operate with K8S cluster"
 CBSDMODULE="sys"
@@ -221,6 +221,10 @@ create_env()
 	else
 		str="cbsd bcreate jname=${jname} runasap=1 vm_cpus=${cpus} vm_ram=${ram} imgsize=${imgsize} vm_os_type=\"${vm_os_type}\" vm_os_profile=\"${vm_os_profile}\" ci_jname=\"${jname}\" ci_fqdn=\"${ci_fqdn}\" ci_ip4_addr=\"${ip4_addr}\" ci_gw4=\"${ip4_gw}\" ip4_addr=\"${ip4_addr}\" ci_user_pubkey=\"${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys\" ci_jname=\"${ci_fqdn}\""
 	fi
+
+	[ -n "${bhyve_vnc_tcp_bind}" ] && str="${str} bhyve_vnc_tcp_bind=\"${bhyve_vnc_tcp_bind}\""
+	[ -n "${ci_user_pw_user}" ] && str="${str} ci_user_pw_user=\"${ci_user_pw_user}\""
+	[ -n "${ci_user_pw_root}" ] && str="${str} ci_user_pw_root=\"${ci_user_pw_root}\""
 
 	log "${str}"
 	${str}

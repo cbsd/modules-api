@@ -15,7 +15,7 @@ EXTHELP="wf_bhyve"
 
 MODULE_PATH="${dbdir}/bhyve"
 
-. ${subr}
+. ${subrdir}/nc.subr
 dryrun=0
 checkip=1
 gold=0
@@ -48,8 +48,8 @@ ip4_addr=
 ip4_gw=
 
 . ${cbsdinit}
-. ${system}
-. ${strings}
+. ${subrdir}/system.subr
+. ${subrdir}/strings.subr
 
 [ -z "${ip4_gw}" -a -n "${oip4_gw}" ] && ip4_gw="${oip4_gw}"
 

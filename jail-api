@@ -10,11 +10,11 @@ ADDHELP="\
 EXTHELP="wf_bhyve"
 MODULE_PATH="${dbdir}/bhyve"
 
-. ${subr}
+. ${subrdir}/nc.subr
 ip4_addr=
 . ${cbsdinit}
-. ${system}
-. ${strings}
+. ${subrdir}/system.subr
+. ${subrdir}/strings.subr
 
 readconf api.conf
 readconf jail-api.conf

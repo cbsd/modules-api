@@ -10,12 +10,12 @@ ADDHELP="\
 EXTHELP="wf_bhyve"
 MODULE_PATH="${dbdir}/bhyve"
 
-. ${subr}
+. ${subrdir}/nc.subr
 
 ip4_addr=
 . ${cbsdinit}
-. ${system}
-. ${strings}
+. ${subrdir}/system.subr
+. ${subrdir}/strings.subr
 
 readconf api.conf
 
@@ -36,7 +36,7 @@ destroy_env()
 	done
 }
 
-. ${jrcconf}
+. ${subrdir}/rcconf.subr
 if [ $? -eq 1 ]; then
 	log "no such env: ${jname}"
 	err 1 "${N1_COLOR}no such env: ${N2_COLOR}${jname}${N0_COLOR}"

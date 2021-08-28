@@ -17,8 +17,7 @@ get_recomendation()
 	. ${_conf}
 
 	if [ -z "${server_list}" ]; then
-		echo "No server_list variable. Please add server_list= in ${workdir}/etc/api/conf"
-		echo "with the corresponding values"
+		echo "No server_list variable. Please add server_list= in ${workdir}/etc/api.conf with the corresponding values"
 		exit 1
 	fi
 

@@ -1,18 +1,14 @@
 #!/usr/local/bin/cbsd
 #v12.2.2
-DIST_MODULE_PATH="${distmoduledir}/bhyve.d"
+DIST_MODULE_PATH="${distmoduledir}/api.d"
 . ${DIST_MODULE_PATH}/share/bhyve.conf
-
-#OPTARGS="${MYCOL} init_masters init_workers"
 MYOPTARG="imgsize jname img ram cpus pubkey host_hostname extras ci_user_pw_user ci_user_pw_root bhyve_vnc_tcp_bind"
 MYARG="mode"
-MYDESC="Operate with K8S cluster"
+MYDESC="Operate with bhyve via API"
 CBSDMODULE="sys"
-# imgsize=10g mode=init jname=test img=ubuntu ram=1g cpus=2
 ADDHELP="\
 "
 EXTHELP="wf_bhyve"
-
 MODULE_PATH="${dbdir}/bhyve"
 
 . ${subrdir}/nc.subr
@@ -21,8 +17,6 @@ checkip=1
 gold=0
 develop=0
 runasap=0
-init_masters=
-init_workers=
 ip4_gw=
 readconf bhyve-default-default.conf
 readconf bhyve.conf
@@ -93,7 +87,7 @@ create_env()
 		IFS=","
 		for i in ${extras}; do
 			IFS="${OIFS}"
-			extras_name=$( echo ${i} | cut -d ":" -f 1 )
+			extras_name=$( echo ${i} | ${CUT_CMD} -d ":" -f 1 )
 			known=0
 			for x in ${jail_known_extras}; do
 				log "extras check [${x}][${extras_name}]"
@@ -103,7 +97,7 @@ create_env()
 			done
 
 			if [ ${known} -eq 1 ]; then
-				#extras_val=$( echo ${i} | cut -d ":" -f 2 )
+				#extras_val=$( echo ${i} | ${CUT_CMD} -d ":" -f 2 )
 				_arg_len=$( strlen ${i} )
 				strpos --str="${i}" --search=":"
 				_eqpos=$?

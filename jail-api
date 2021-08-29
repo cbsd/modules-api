@@ -19,6 +19,7 @@ ip4_addr=
 readconf api.conf
 readconf jail-api.conf
 
+[ -n "${ip4_gw}" ] && oip4_gw="${ip4_gw}"
 [ -z "${ver}" ] && ver="native"
 
 set -e
@@ -62,7 +63,7 @@ create_env()
 		IFS=","
 		for i in ${extras}; do
 			IFS="${OIFS}"
-			extras_name=$( echo ${i} | cut -d ":" -f 1 )
+			extras_name=$( echo ${i} | ${CUT_CMD} -d ":" -f 1 )
 			known=0
 			for x in ${jail_known_extras}; do
 				log "extras check [${x}][${extras_name}]"
@@ -72,7 +73,7 @@ create_env()
 			done
 
 			if [ ${known} -eq 1 ]; then
-				#extras_val=$( echo ${i} | cut -d ":" -f 2 )
+				#extras_val=$( echo ${i} | ${CUT_CMD} -d ":" -f 2 )
 				_arg_len=$( strlen ${i} )
 				strpos --str="${i}" --search=":"
 				_eqpos=$?
@@ -108,6 +109,10 @@ create_env()
 		primary_ip="${v4_addr}"
 	fi
 
+	if [ -n "${ci_gw42}" ]; then
+		v6_addr=$( dhcpdv6 )
+	fi
+
 	log "exec extras: ${exec_extras}"
 
 	for i in ${exec_extras}; do
@@ -131,7 +136,7 @@ create_env()
 		fi
 	done
 
-	for i in ${v6_addr} ${v4_addr}; do
+	for i in ${v4_addr} ${v6_addr}; do
 		if [ -z "${ip4_addr}" ]; then
 			ip4_addr="${i}"
 		else
@@ -230,9 +235,8 @@ create_env()
 	fi
 
 	create_time=$( ${DATE_CMD} -u "+%Y-%m-%dT%H:%M:%S" )
-
 	[ -z "${port4}" ] && port4="${port}"
-	[ -z "${port6}" ] && port6="${port}"
+	[ -z "${port6}" ] && port6="22"
 	[ -z "${ssh4_host}" ] && ssh4_host="${v4_addr}"
 	[ -z "${ssh6_host}" ] && ssh6_host="${v6_addr}"
 

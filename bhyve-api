@@ -251,10 +251,17 @@ create_env()
 		ssh_host="${ip4_addr}"
 	else
 		vnc_port=$( ${HEAD_CMD} -n1 ${cbsd_workdir}/vm/${jname}/vnc_port | ${AWK_CMD} '{printf $1}' )
-		port=$(( vnc_port + 2000 ))
-		log "expose mode=add jname=${jname} in=${port} out=22"
-		expose mode=add jname=${jname} in=${port} out=22 >> ${MY_LOG}
+		port=$(( vnc_port + 3000 ))
+
+		if [ "${vm_os_type}" = "windows" ]; then
+			log "expose mode=add jname=${jname} in=${port} out=3389"
+			expose mode=add jname=${jname} in=${port} out=3389 >> ${MY_LOG}
+		else
+			log "expose mode=add jname=${jname} in=${port} out=22"
+			expose mode=add jname=${jname} in=${port} out=22 >> ${MY_LOG}
+		fi
 	fi
+
 
 	if is_number "${imgsize}"; then
 		if conv2bytes ${imgsize}; then
@@ -309,11 +316,27 @@ create_env()
   "ssh_port": ${port},
   "ssh4_port": ${port4},
   "ssh6_port": ${port6},
+EOF
+
+	case "${vm_os_type}" in
+		windows)
+			${CAT_CMD} >> ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh <<EOF
+  "ssh_string": "xfreerdp +clipboard +fonts /rfx /size:1920x1200 /u:windows /v:${ssh_host}:${port}",
+  "ssh4_string": "xfreerdp +clipboard +fonts /rfx /size:1920x1200 /u:windows /v:${ssh4_host}:${port4}",
+  "ssh6_string": "xfreerdp +clipboard +fonts /rfx /size:1920x1200 /u:windows /v:${ssh6_host}:${port6}"
+}
+EOF
+			;;
+		*)
+			${CAT_CMD} >> ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh <<EOF
   "ssh_string": "ssh ${ssh_user}@${ssh_host} -p${port}",
   "ssh4_string": "ssh ${ssh_user}@${ssh4_host} -p${port4}",
   "ssh6_string": "ssh ${ssh_user}@${ssh6_host} -p${port6}"
 }
 EOF
+			;;
+	esac
+
         # dup to param-values
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/vms/${jname} <<EOF
 host_hostname="${host_hostname}"
@@ -336,10 +359,24 @@ ssh6_host="${ssh6_host}"
 ssh_port="${port}"
 ssh_port4="${port4}"
 ssh_port6="${port6}"
+EOF
+
+	case "${vm_os_type}" in
+		windows)
+			${CAT_CMD} >> ${cbsd_api_dbdir}/${cid}/vms/${jname} <<EOF
+ssh_string="xfreerdp +clipboard +fonts /rfx /size:1920x1200 /u:windows /v:${ssh_host}:${port}"
+ssh4_string="xfreerdp +clipboard +fonts /rfx /size:1920x1200 /u:windows /v:${ssh4_host}:${port4}"
+ssh6_string="xfreerdp +clipboard +fonts /rfx /size:1920x1200 /u:windows /v:${ssh6_host}:${port6}"
+EOF
+			;;
+		*)
+			${CAT_CMD} >> ${cbsd_api_dbdir}/${cid}/vms/${jname} <<EOF
 ssh_string="ssh ${ssh_user}@${ssh_host} -p${port}"
 ssh4_string="ssh ${ssh_user}@${ssh4_host} -p${port4}"
 ssh6_string="ssh ${ssh_user}@${ssh6_host} -p${port6}"
 EOF
+			;;
+	esac
 
 	${CHOWN_CMD} ${cbsduser}:${cbsduser} ${cbsd_api_dbdir}/${cid}/vms/${jname} ${cbsd_api_dbdir}/${cid}/${jname}.node ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh
 

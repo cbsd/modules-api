@@ -12,6 +12,8 @@ MODULE_PATH="${dbdir}/bhyve"
 
 . ${subrdir}/nc.subr
 ip4_addr=
+cpus=
+ram=
 . ${cbsdinit}
 . ${subrdir}/system.subr
 . ${subrdir}/strings.subr
@@ -35,7 +37,7 @@ create_env()
 	local ssh_host=
 
 	[ -z "${ssh_host}" ] && ssh_host="${nodeip}"
-	[ -z "${ssh_user}" ] && err 1 "ssh_user empty? check img/mapping in bhyve-api.conf for: ${img}"
+	[ -z "${ssh_user}" ] && err 1 "ssh_user empty? check img/mapping in bhyve-api.conf for: ${image}"
 
 	# extras area
 	v6_addr=
@@ -175,6 +177,17 @@ create_env()
 
 	[ -z "${host_hostname}" ] && host_hostname="${jname}.my.domain"
 
+	if [ -z "${cpus}" -o "${cpus}" = "0" ]; then
+		cpu_args=
+	else
+		cpu_args="cpu=\"${cpus}\""
+	fi
+	if [ -z "${ram}" -o "${ram}" = "0" ]; then
+		ram_args=
+	else
+		ram_args="vmemoryuse=\"${ram}\""
+	fi
+
 	str="cbsd jcreate \
 		jname=${jname} \
 		host_hostname=\"${host_hostname}\" \
@@ -185,6 +198,8 @@ create_env()
 		ci_user_pubkey=\"${cbsd_api_dbdir}/${cid}/.ssh/authorized_keys\" \
 		pkg_bootstrap="${pkg_bootstrap}" \
 		allow_raw_sockets=1 \
+		${cpu_args} \
+		${ram_args} \
 		pkglist=\"${pkglist}\" \
 		"
 
@@ -205,8 +220,6 @@ create_env()
 		fi
 	fi
 
-	cpus=1
-	ram="1g"
 
 	hostname=$( hostname )
 

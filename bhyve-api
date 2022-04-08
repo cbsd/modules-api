@@ -2,7 +2,7 @@
 #v12.2.2
 DIST_MODULE_PATH="${distmoduledir}/api.d"
 . ${DIST_MODULE_PATH}/share/bhyve.conf
-MYOPTARG="imgsize jname img ram cpus pubkey host_hostname extras ci_user_pw_user ci_user_pw_root bhyve_vnc_tcp_bind"
+MYOPTARG="imgsize jname image ram cpus pubkey host_hostname extras ci_user_pw_user ci_user_pw_root bhyve_vnc_tcp_bind"
 MYARG="mode"
 MYDESC="Operate with bhyve via API"
 CBSDMODULE="sys"
@@ -52,14 +52,14 @@ create_env()
 	ssh_user=
 	ssh_port=
 
-	eval vm_os_type="\$${img}_vm_os_type"
-	eval vm_os_profile="\$${img}_vm_os_profile"
-	eval ssh_user="\$${img}_ssh_user"
+	eval vm_os_type="\$${image}_vm_os_type"
+	eval vm_os_profile="\$${image}_vm_os_profile"
+	eval ssh_user="\$${image}_ssh_user"
 
 	[ -z "${ssh_host}" ] && ssh_host="${nodeip}"
-	[ -z "${vm_os_type}" ] && err 1 "vm_os_type empty? check img/mapping in bhyve-api.conf for: ${img}"
-	[ -z "${vm_os_profile}" ] && err 1 "vm_os_profile empty? check img/mapping in bhyve-api.conf for: ${img}"
-	[ -z "${ssh_user}" ] && err 1 "ssh_user empty? check img/mapping in bhyve-api.conf for: ${img}"
+	[ -z "${vm_os_type}" ] && err 1 "vm_os_type empty? check img/mapping in bhyve-api.conf for: ${image}"
+	[ -z "${vm_os_profile}" ] && err 1 "vm_os_profile empty? check img/mapping in bhyve-api.conf for: ${image}"
+	[ -z "${ssh_user}" ] && err 1 "ssh_user empty? check img/mapping in bhyve-api.conf for: ${image}"
 
 	# extras area
 	v6_addr=

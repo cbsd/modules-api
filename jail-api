@@ -5,7 +5,17 @@ MYOPTARG="imgsize jname img ram cpus pubkey host_hostname ver extras pkglist"
 MYARG="mode"
 MYDESC="Operate with jail via API"
 CBSDMODULE="sys"
-ADDHELP="\
+ADDHELP="
+${H3_COLOR}Description${N0_COLOR}:
+
+Extra helper for jail creation via API
+
+${H3_COLOR}General Options${N0_COLOR}:
+
+${H3_COLOR}Examples${N0_COLOR}:
+
+${H3_COLOR}See also${N0_COLOR}:
+
 "
 EXTHELP="wf_bhyve"
 MODULE_PATH="${dbdir}/bhyve"
@@ -14,6 +24,7 @@ MODULE_PATH="${dbdir}/bhyve"
 ip4_addr=
 cpus=
 ram=
+mq_tube=
 . ${cbsdinit}
 . ${subrdir}/system.subr
 . ${subrdir}/strings.subr
@@ -28,7 +39,7 @@ set -e
 . ${distmoduledir}/api.d/api.subr
 set +e
 MY_LOG="${cbsd_api_logdir}/jail-api.log"
-log "wakeup: $*"
+log "wakeup: [workdir: ${workdir}, cbsdworkdir: ${cbsd_workdir}, api_postcreate_hook: ${api_postcreate_hook}, cbsd_api_dbdir: ${cbsd_api_dbdir}]: $*"
 
 create_env()
 {
@@ -220,9 +231,11 @@ create_env()
 		fi
 	fi
 
-
-	hostname=$( hostname )
-
+	if [ -z "${mq_tube}" ]; then
+		hostname=$( hostname )
+	else
+		hostname="${mq_tube}"
+	fi
 	echo "${hostname}" > ${cbsd_api_dbdir}/${cid}/${jname}.node
 
 	if is_number "${imgsize}"; then
@@ -252,6 +265,10 @@ create_env()
 	[ -z "${port6}" ] && port6="22"
 	[ -z "${ssh4_host}" ] && ssh4_host="${v4_addr}"
 	[ -z "${ssh6_host}" ] && ssh6_host="${v6_addr}"
+
+	if [ "${port4_real}" = "1" ]; then
+		port4="22"
+	fi
 
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh <<EOF
 {
@@ -304,11 +321,10 @@ EOF
 
 #	echo "${host_hostname} (jail:${ver}) ${cpus}/${ram}/${imgsize} ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}
 
-
 	#echo -n "ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh
 	${CHOWN_CMD} ${cbsduser}:${cbsduser} ${cbsd_api_dbdir}/${cid}/vms/${jname} ${cbsd_api_dbdir}/${cid}/${jname}.node ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh
 
-	[ -n "${api_postcreate_hook}" -a -x "${api_postcreate_hook}" ] && ${api_postcreate_hook} -c ${cid} -j ${jname} -m create -r ${cbsd_api_dbdir}
+	[ -n "${api_postcreate_hook}" -a -x "${api_postcreate_hook}" ] && ${api_postcreate_hook} -c "${cid}" -j "${jname}" -m create -r "${cbsd_api_dbdir}" -w "${cbsd_workdir}"
 }
 
 ## MAIN

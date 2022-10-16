@@ -6,7 +6,17 @@ MYOPTARG="imgsize jname image ram cpus pubkey host_hostname extras ci_user_pw_us
 MYARG="mode"
 MYDESC="Operate with bhyve via API"
 CBSDMODULE="sys"
-ADDHELP="\
+ADDHELP="
+${H3_COLOR}Description${N0_COLOR}:
+
+Extra helper for jail creation via API
+
+${H3_COLOR}General Options${N0_COLOR}:
+
+${H3_COLOR}Examples${N0_COLOR}:
+
+${H3_COLOR}See also${N0_COLOR}:
+
 "
 EXTHELP="wf_bhyve"
 MODULE_PATH="${dbdir}/bhyve"
@@ -33,7 +43,7 @@ set -e
 . ${distmoduledir}/api.d/api.subr
 set +e
 MY_LOG="${cbsd_api_logdir}/bhyve-api.log"
-log "wakeup: $*"
+log "wakeup: [workdir: ${workdir}, cbsdworkdir: ${cbsd_workdir}, api_postcreate_hook: ${api_postcreate_hook}, cbsd_api_dbdir: ${cbsd_api_dbdir}]: $*"
 
 ip4_addr=
 vm_os_type=
@@ -291,9 +301,17 @@ create_env()
 	[ -z "${ssh4_host}" ] && ssh4_host="${v4_addr}"
 	[ -z "${ssh6_host}" ] && ssh6_host="${v6_addr}"
 
+	if [ "${port4_real}" = "1" ]; then
+		port4="22"
+	fi
+
 	#echo "${host_hostname} (${vm_os_type}:${vm_os_profile}) ${cpus}/${ram}/${imgsize} ssh ${ssh_user}@${ssh_host} -p${port}" > ${cbsd_api_dbdir}/${cid}/vms/${jname}
 
-	hostname=$( hostname )
+	if [ -z "${mq_tube}" ]; then
+		hostname=$( hostname )
+	else
+		hostname="${mq_tube}"
+	fi
 
 	echo "${hostname}" > ${cbsd_api_dbdir}/${cid}/${jname}.node
 	${CAT_CMD} > ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh <<EOF
@@ -380,7 +398,7 @@ EOF
 
 	${CHOWN_CMD} ${cbsduser}:${cbsduser} ${cbsd_api_dbdir}/${cid}/vms/${jname} ${cbsd_api_dbdir}/${cid}/${jname}.node ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh
 
-	[ -n "${api_postcreate_hook}" -a -x "${api_postcreate_hook}" ] && ${api_postcreate_hook} -c ${cid} -j ${jname} -m create -r ${cbsd_api_dbdir}
+	[ -n "${api_postcreate_hook}" -a -x "${api_postcreate_hook}" ] && ${api_postcreate_hook} -c "${cid}" -j "${jname}" -m create -r "${cbsd_api_dbdir}" -w "${cbsd_workdir}"
 }
 
 ## MAIN

@@ -5,7 +5,17 @@ MYOPTARG="imgsize jname img ram cpus pubkey host_hostname"
 MYARG="mode"
 MYDESC="Operate with jail via API"
 CBSDMODULE="sys"
-ADDHELP="\
+ADDHELP="
+${H3_COLOR}Description${N0_COLOR}:
+
+Extra helper for jail creation via API
+
+${H3_COLOR}General Options${N0_COLOR}:
+
+${H3_COLOR}Examples${N0_COLOR}:
+
+${H3_COLOR}See also${N0_COLOR}:
+
 "
 EXTHELP="wf_bhyve"
 MODULE_PATH="${dbdir}/bhyve"
@@ -23,7 +33,7 @@ set -e
 . ${distmoduledir}/api.d/api.subr
 set +e
 MY_LOG="${cbsd_api_logdir}/contol-api.log"
-log "wakeup: $*"
+log "wakeup: [workdir: ${workdir}, cbsdworkdir: ${cbsd_workdir}, api_postcreate_hook: ${api_postcreate_hook}, cbsd_api_dbdir: ${cbsd_api_dbdir}]: $*"
 
 destroy_env()
 {
@@ -31,7 +41,7 @@ destroy_env()
 		if [ -r ${_dir}/${jname} ]; then
 			cid=$( ${REALPATH_CMD} ${_dir}/${jname} | ${CUT_CMD} -d / -f 5 )
 			${RM_CMD} -f ${_dir}/${jname} ${cbsd_api_dbdir}/${cid}/${jname}-bhyve.ssh ${cbsd_api_dbdir}/${cid}/${jname}.node
-			[ -n "${api_postdestroy_hook}" -a -x "${api_postdestroy_hook}" ] && ${api_postdestroy_hook} -c ${cid} -j ${jname} -m destroy -r ${cbsd_api_dbdir}
+			[ -n "${api_postdestroy_hook}" -a -x "${api_postdestroy_hook}" ] && ${api_postdestroy_hook} -c "${cid}" -j "${jname}" -m destroy -r "${cbsd_api_dbdir}" -w "${cbsd_workdir}"
 		fi
 	done
 }

@@ -69,13 +69,12 @@ create_env()
 	if [ "${image}" = "bhyve" -o -z "${image}" ]; then
 		[ -z "${vm_os_type}" ] && err 1 "empty image and/or vm_os_type"
 		[ -z "${vm_os_profile}" ] && err 1 "empty image and/or vm_os_profile"
-		if [ ! -r "${workdir}/etc/vm-${vm_os_type}-${vm_os_profile}.conf" ]; then
+		if [ -r "${workdir}/etc/vm-${vm_os_type}-${vm_os_profile}.conf" ]; then
 			_profile_file="${workdir}/etc/vm-${vm_os_type}-${vm_os_profile}.conf"
-		elif [ ! -r "${workdir}/etc/defaults/vm-${vm_os_type}-${vm_os_profile}.conf" ]; then
+		elif [ -r "${workdir}/etc/defaults/vm-${vm_os_type}-${vm_os_profile}.conf" ]; then
 			_profile_file="${workdir}/etc/defaults/vm-${vm_os_type}-${vm_os_profile}.conf"
 		fi
 		[ -z "${_profile_file}" ] && err 1 "no such profile for type/profile: ${vm_os_type}-${vm_os_profile}"
-		myb_image
 		eval $( ${GREP_CMD} ^myb_image= ${_profile_file} 2>/dev/null )
 		[ -z "${myb_image}" ] && err 1 "no such myb_image vars for type/profile: ${vm_os_type}-${vm_os_profile}"
 		image="${myb_image}"

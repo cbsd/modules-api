@@ -2,7 +2,7 @@
 #v12.2.2
 DIST_MODULE_PATH="${distmoduledir}/api.d"
 . ${DIST_MODULE_PATH}/share/bhyve.conf
-MYOPTARG="imgsize jname image ram cpus pubkey host_hostname extras ci_user_pw_user ci_user_pw_root bhyve_vnc_tcp_bind"
+MYOPTARG="imgsize jname image ram cpus pubkey host_hostname extras ci_user_pw_user ci_user_pw_root bhyve_vnc_tcp_bind vm_os_type vm_os_profile"
 MYARG="mode"
 MYDESC="Operate with bhyve via API"
 CBSDMODULE="sys"
@@ -50,6 +50,9 @@ vm_os_type=
 vm_os_profile=
 ip4_addr=
 ip4_gw=
+image=
+vm_os_type=
+vm_os_profile=
 
 . ${cbsdinit}
 . ${subrdir}/system.subr
@@ -59,11 +62,28 @@ ip4_gw=
 
 create_env()
 {
+	local _profile_file=
 	ssh_user=
 	ssh_port=
 
-	eval vm_os_type="\$${image}_vm_os_type"
-	eval vm_os_profile="\$${image}_vm_os_profile"
+	if [ "${image}" = "bhyve" -o -z "${image}" ]; then
+		[ -z "${vm_os_type}" ] && err 1 "empty image and/or vm_os_type"
+		[ -z "${vm_os_profile}" ] && err 1 "empty image and/or vm_os_profile"
+		if [ ! -r "${workdir}/etc/vm-${vm_os_type}-${vm_os_profile}.conf" ]; then
+			_profile_file="${workdir}/etc/vm-${vm_os_type}-${vm_os_profile}.conf"
+		elif [ ! -r "${workdir}/etc/defaults/vm-${vm_os_type}-${vm_os_profile}.conf" ]; then
+			_profile_file="${workdir}/etc/defaults/vm-${vm_os_type}-${vm_os_profile}.conf"
+		fi
+		[ -z "${_profile_file}" ] && err 1 "no such profile for type/profile: ${vm_os_type}-${vm_os_profile}"
+		myb_image
+		eval $( ${GREP_CMD} ^myb_image= ${_profile_file} 2>/dev/null )
+		[ -z "${myb_image}" ] && err 1 "no such myb_image vars for type/profile: ${vm_os_type}-${vm_os_profile}"
+		image="${myb_image}"
+	else
+		eval vm_os_type="\$${image}_vm_os_type"
+		eval vm_os_profile="\$${image}_vm_os_profile"
+	fi
+
 	eval ssh_user="\$${image}_ssh_user"
 
 	[ -z "${ssh_host}" ] && ssh_host="${nodeip}"

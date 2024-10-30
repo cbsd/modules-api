@@ -158,7 +158,7 @@ create_env()
 	done
 
 	# additional check for profile/type?
-	cid=$( ${MD5_CMD} -qs "${pubkey}" )
+	cid=$( ${miscdir}/cbsd_md5 "${pubkey}" )
 
 	if [ ! -d ${cbsd_api_dbdir}/${cid} ]; then
 		${MKDIR_CMD} -m 0770 -p ${cbsd_api_dbdir}/${cid}
@@ -274,6 +274,7 @@ create_env()
 {
   "instanceid": "${host_hostname}",
   "type": "container",
+  "emulator": "jail",
   "is_power_on": true,
   "created": "${create_time}",
   "cpus": ${cpus},
@@ -300,6 +301,7 @@ gid="${jname}"
 hostname="${hostname}"
 ver="${ver}"
 type="container"
+emulator="jail"
 is_power_on="true"
 created="${create_time}"
 cpus="${cpus}"

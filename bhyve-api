@@ -307,6 +307,7 @@ create_env()
 	# for slow hdd/vm startup
 	sleep 5
 
+	### partial dub code with nodeip-expose
 	original_vnc_port=$( ${HEAD_CMD} -n1 ${cbsd_workdir}/vm/${jname}/vnc_port | ${AWK_CMD} '{printf $1}' )
 	log "expose settings: nodeip_expose:${nodeip_expose}, nodeip_expose_ssh=${nodeip_expose_ssh}, nodeip_expose_vnc=${nodeip_expose_vnc}, nodeip_expose_rdp=${nodeip_expose_rdp}"
 
@@ -327,8 +328,6 @@ create_env()
 	else
 		ssh_port=$(( original_vnc_port + 3000 ))
 		ssh_host="${nodeip}"
-		log "expose mode=add jname=${jname} in=${ssh_port} out=22"
-		expose mode=add jname=${jname} in=${ssh_port} out=22 >> ${MY_LOG}
 	fi
 
 	### VNC access
@@ -347,8 +346,6 @@ create_env()
 	else
 		vnc_port=$(( original_vnc_port + 3001 ))
 		vnc_host="${nodeip}"
-		log "expose mode=add jname=${jname} in=${vnc_port} out=${original_vnc_port} outaddr=127.0.0.1"
-		expose mode=add jname=${jname} in=${vnc_port} out=${original_vnc_port} outaddr=127.0.0.1 >> ${MY_LOG}
 	fi
 
 	### RDP access, VDI only (check)
@@ -367,15 +364,16 @@ create_env()
 	else
 		rdp_port=$(( original_vnc_port + 3002 ))
 		rdp_host="${nodeip}"
-		log "expose mode=add jname=${jname} in=${rdp_port} out=3389"
-		expose mode=add jname=${jname} in=${rdp_port} out=3389 >> ${MY_LOG}
 	fi
+	### // partial dub code with nodeip-expose
+
+	nodeip-expose mode=create jname=${jname}
 
 	if [ -n "${api_ip4_pool}" ]; then
 		my_extv4=$( /usr/local/bin/cbsd dhcpd ip4pool=${api_ip4_pool} )
 	fi
 
-	# for test only
+	# for test only, sample code
 	if [ -n "${my_extv4}" ]; then
 		cat > /usr/jails/jails-system/${jname}/master_poststart.d/v4 <<EOF
 #!/bin/sh
